@@ -4,8 +4,9 @@ Website: http://payhub.com
 Tags: woocommerce, payment, gateway, credit card, visa, mastercard
 Requires at least: 3.5
 Tested up to: 3.8.1
-Stable tag: 1.9 
-License: GPLv3
+Stable tag: 1.0.9 
+License: GPLv3 or later
+License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
 PayHub gateway plugin for the WooCommerce system.  It allows you to accept credit cards directly from the WooCommerce checkout page. 
 
@@ -14,10 +15,10 @@ This plugin works specifically with the WooCommerce ecommerce plugin.  It allows
 
 == Changelog ==
 
-= 1.8 =
+= 1.0.8 =
 * Initial Release
 
-= 1.9 =
+= 1.0.9 =
 * Released on February 20, 2014
 * Fixed issue on WooCommerce 2.1.x where the results page was not displaying correctly.
 * We now require SSL peer verification when sending a transaction request.
