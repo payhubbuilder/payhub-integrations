@@ -14,11 +14,11 @@
 // class constructor
     function payhub() {
       global $order;
-
+      
       $this->code = 'payhub';
-      $this->title = MODULE_PAYMENT_PAYHUB_TEXT_TITLE;
-      $this->public_title = MODULE_PAYMENT_PAYHUB_TEXT_PUBLIC_TITLE;
-      $this->description = MODULE_PAYMENT_PAYHUB_TEXT_DESCRIPTION;
+      $this->title = "PayHub Checkout osCommerce Add-on";
+      $this->public_title = (MODULE_PAYMENT_PAYHUB_TESTMODE == "live") ? "PayHub Checkout" : "PayHub Checkout (**DEMO MODE**)"; 
+      $this->description = "Accept credit card payments through osCommerce using PayHub Checkout.";
       $this->sort_order = MODULE_PAYMENT_PAYHUB_SORT_ORDER;
       $this->enabled = ((MODULE_PAYMENT_PAYHUB_STATUS == 'True') ? true : false);
 
@@ -77,13 +77,13 @@
         $expires_year[] = array('id' => strftime('%y',mktime(0,0,0,1,1,$i)), 'text' => strftime('%Y',mktime(0,0,0,1,1,$i)));
       }
 
-      $confirmation = array('fields' => array(array('title' => MODULE_PAYMENT_PAYHUB_CREDIT_CARD_OWNER,
+      $confirmation = array('fields' => array(array('title' => 'Name on Card',
                                                     'field' => tep_draw_input_field('cc_owner', $order->billing['firstname'] . ' ' . $order->billing['lastname'])),
-                                              array('title' => MODULE_PAYMENT_PAYHUB_CREDIT_CARD_NUMBER,
-                                                    'field' => tep_draw_input_field('cc_number_nh-dns')),
-                                              array('title' => MODULE_PAYMENT_PAYHUB_CREDIT_CARD_EXPIRES,
+                                              array('title' => 'Card Number',
+                                                    'field' => tep_draw_input_field('cc_number_nh-dns', '', 'autocomplete="off"')),
+                                              array('title' => 'Card Expiration Date',
                                                     'field' => tep_draw_pull_down_menu('cc_expires_month', $expires_month) . '&nbsp;' . tep_draw_pull_down_menu('cc_expires_year', $expires_year)),
-                                              array('title' => MODULE_PAYMENT_PAYHUB_CREDIT_CARD_CVC,
+                                              array('title' => 'CVV/CID (Security Code)',
                                                     'field' => tep_draw_input_field('cc_cvc_nh-dns', '', 'size="5" maxlength="4"'))));
 
 
@@ -117,29 +117,24 @@
                       'ship_state' => substr($order->delivery['state'], 0, 40),
                       'ship_zip' => $order->delivery['postcode'],
                       'note' => substr(STORE_NAME, 0, 255),
-                      'amount' => round(($order->info['total'] * 100), 0),
+                      'amount' => $order->info['total'],
                       'cc' => substr($HTTP_POST_VARS['cc_number_nh-dns'], 0, 22),
                       'month' => $HTTP_POST_VARS['cc_expires_month'],
-											'year' => $HTTP_POST_VARS['cc_expires_year'],
+		      'year' => $HTTP_POST_VARS['cc_expires_year'],
                       'cvv' => substr($HTTP_POST_VARS['cc_cvc_nh-dns'], 0, 4)
                       );
 
+      $gateway_url = 'https://checkout.payhub.com/transaction/api';
+      
       switch (MODULE_PAYMENT_PAYHUB_TESTMODE) {
-        case 'Live':
-          $gateway_url = 'https://checkout.payhub.com/invoice/transaction';
-					$params['mode'] = "live";
+        case 'live':
+	  $params['mode'] = "live";
           break;
-
         default:
-          $params['orgid'] = "10027";
-          $params['username'] = "ND783kdniI";
-          $params['password'] = "yTV7Ctc3v2";
-          $params['tid'] = "43";
-					$params['mode'] = "demo";
-          $gateway_url = 'https://checkout.payhub.com/invoice/transaction';
+	  # "demo" mode will cause the merchant parameters to be overwritten at the 
+	  # gateway_url host and the request redirected to a test server.
+	  $params['mode'] = "demo";
       }
-
-
 
       $post_string = json_encode($params);
 
@@ -147,8 +142,6 @@
       $response = json_decode($res_string);
       #$response = preg_replace('/\//', '', $response);
 
-
-			
       if ($response->RESPONSE_CODE != "00") {
         $error = 'Response Code:  ' . $response->RESPONSE_CODE . '.  ' . $response->RESPONSE_TEXT;
       }
@@ -217,8 +210,7 @@
     $c_opts = array(CURLOPT_URL => $url,
                     CURLOPT_VERBOSE => 0,
                     CURLOPT_SSL_VERIFYHOST => 0,
-                    CURLOPT_SSL_VERIFYPEER => false,
-                    CURLOPT_CAINFO => "",
+                    CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_POST => true,
