@@ -39,8 +39,10 @@ Automatic Install:
 Manual Adding the PayHub Checkout add-on to osCommerce:
 Only use this method if you do not already see the PayHub Checkout option in the payment modules list.  This method requires that you have read and write access to the file system of your webserver.
 * Go to http://developer.payhub.com and download the osCommerce add-on.
-* Unzip the add-on and copy the "payhub_checkout.php" file to the correct osCommerce modules directory.  Relative to your osCommerce installation path, this will be "/catalog/includes/modules/payment/". 
-
+* Unzip the add-on and `cd` into the resulting directory.
+* Copy the "payhub_checkout.php" files from the "catalog/includes/languages/english/modules/payment/" and "catalog/includes/modules/payment/" directories to the corresponding directories in the osCommerce installation.
+* Refresh the payment modules page in osCommerce admin.
+ 
 You should now see the "PayHub Checkout" option when completing a purchase in osCommerce.
 
 == How to find your API credentials ==
