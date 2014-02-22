@@ -60,7 +60,7 @@ Since our plugin uses cURL (http://curl.haxx.se/) to send transaction requests, 
 
 This solutions was shamelessly borrowed from the Stack Overflow post: http://stackoverflow.com/questions/6400300/php-curl-https-causing-exception-ssl-certificate-problem-verify-that-the-ca-cer.  Gotta love Stack Overflow ;^).
 
-Alternitively, you can dig into the PayHub plugin itself and add the following key/value pair to the $c_opts array: CURLOPT_CAINFO => "payth/to/ca-bundle.pem".  See http://us2.php.net/manual/en/book.curl.php for more info.
+Alternatively, you can dig into the PayHub plugin itself and add the following key/value pair to the $c_opts array: CURLOPT_CAINFO => "payth/to/ca-bundle.pem".  See http://us2.php.net/manual/en/book.curl.php for more info.
 
 == How to get support ==
 If you have any questions you can contact PayHub at:
