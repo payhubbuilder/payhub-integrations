@@ -10,16 +10,12 @@
   Released under the GNU General Public License
 */
 
-  define('MODULE_PAYMENT_PAYHUB_TEXT_TITLE', 'PayHub Credit Card Module');
-  define('MODULE_PAYMENT_PAYHUB_TEXT_PUBLIC_TITLE', 'Credit Cards (Powered by PayHub)');
-  define('MODULE_PAYMENT_PAYHUB_TEXT_DESCRIPTION', '<a href="https://www.payhub.com" target="_blank" style="text-decoration: underline; font-weight: bold;">Visit PayHub.com Website</a> to get more information about our services.<br /><br />To use this plugin, a PayHub account is required.  Here are a few ways to obtain a PayHub account:<br /><br />1) Contact the developer/sales representative by emailing <a href="mailto:ej@swebdev.net?subject=osCommerce PayHub Application">ej@swebdev.net</a>.<br /><br />2) Go to <a href="http://swebdev.net/applications">http://swebdev.net/application</a> to fill out an online application.');
-  define('MODULE_PAYMENT_PAYHUB_CREDIT_CARD_OWNER', 'Credit Card Owner:');
-  define('MODULE_PAYMENT_PAYHUB_CREDIT_CARD_NUMBER', 'Credit Card Number:');
-  define('MODULE_PAYMENT_PAYHUB_CREDIT_CARD_EXPIRES', 'Credit Card Expiry Date:');
-  define('MODULE_PAYMENT_PAYHUB_CREDIT_CARD_CVC', 'Credit Card Check Number (CVC):');
+  define('MODULE_PAYMENT_PAYHUB_TEXT_TITLE', 'PayHub Checkout');
+  define('MODULE_PAYMENT_PAYHUB_TEXT_PUBLIC_TITLE', 'Credit Card (Powered by PayHub)');
+  define('MODULE_PAYMENT_PAYHUB_TEXT_DESCRIPTION', 'PayHub Checkout integrates directly into osCommerce and allows your customers to pay by credit card on your website.  Please visit us at http://payhub.com for more information on our products and services or for our contact information.<br />&nbsp;<br />An active PayHub account is required to use this add-on in "live" mode.  Please contact us if you need to setup an account.');
   define('MODULE_PAYMENT_PAYHUB_ERROR_TITLE', 'There has been an error processing your credit card');
-  define('MODULE_PAYMENT_PAYHUB_ERROR_GENERAL', 'Please try again and if problems persist, please try another payment method.');
-  define('MODULE_PAYMENT_PAYHUB_ERROR_DECLINED', 'This credit card transaction has been declined. Please try again and if problems persist, please try another credit card or payment method.');
+  define('MODULE_PAYMENT_PAYHUB_ERROR_GENERAL', 'Please try again and if problems persist, try another payment method.');
+  define('MODULE_PAYMENT_PAYHUB_ERROR_DECLINED', 'This credit card transaction has been declined. Please try another credit card or payment method.');
   define('MODULE_PAYMENT_PAYHUB_ERROR_INVALID_EXP_DATE', 'The credit card expiration date is invalid. Please check the card information and try again.');
   define('MODULE_PAYMENT_PAYHUB_ERROR_EXPIRED', 'The credit card has expired. Please try again with another card or payment method.');
   define('MODULE_PAYMENT_PAYHUB_ERROR_CVC', 'The credit card check number (CVC) is invalid. Please check the card information and try again.');

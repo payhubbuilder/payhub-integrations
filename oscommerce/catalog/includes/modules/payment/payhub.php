@@ -16,9 +16,11 @@
       global $order;
       
       $this->code = 'payhub';
-      $this->title = "PayHub Checkout osCommerce Add-on";
-      $this->public_title = (MODULE_PAYMENT_PAYHUB_TESTMODE == "live") ? "PayHub Checkout" : "PayHub Checkout (**DEMO MODE**)"; 
-      $this->description = "Accept credit card payments through osCommerce using PayHub Checkout.";
+      $this->title = MODULE_PAYMENT_PAYHUB_TEXT_TITLE;
+      $this->public_title = MODULE_PAYMENT_PAYHUB_TEXT_PUBLIC_TITLE;
+      # add notice if in demo mode
+      if(MODULE_PAYMENT_PAYHUB_TESTMODE == "demo") $this->public_title .= " (**DEMO MODE**)"; 
+      $this->description = MODULE_PAYMENT_PAYHUB_TEXT_DESCRIPTION;
       $this->sort_order = MODULE_PAYMENT_PAYHUB_SORT_ORDER;
       $this->enabled = ((MODULE_PAYMENT_PAYHUB_STATUS == 'True') ? true : false);
 
@@ -178,7 +180,7 @@
       tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('API Username', 'MODULE_PAYMENT_PAYHUB_API_USERNAME', '', 'PayHub API Username generated for your account', '6', '0', now())");
       tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('API Password', 'MODULE_PAYMENT_PAYHUB_API_PASSWORD', '', 'PayHub API Password generated for your account', '6', '0', now())");
       tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Terminal ID', 'MODULE_PAYMENT_PAYHUB_TERMID', '', 'PayHub Terminal ID generated for your account', '6', '0', now())");
-      tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Sort order of display.', 'MODULE_PAYMENT_PAYHUB_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
+      tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Sort order of Display.', 'MODULE_PAYMENT_PAYHUB_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
       tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) values ('Payment Zone', 'MODULE_PAYMENT_PAYHUB_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', 'tep_get_zone_class_title', 'tep_cfg_pull_down_zone_classes(', now())");
       tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Set Order Status', 'MODULE_PAYMENT_PAYHUB_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name', now())");
       tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('cURL Program Location', 'MODULE_PAYMENT_PAYHUB_CURL', '/usr/bin/curl', 'The location to the cURL program application.', '6', '0' , now())");
