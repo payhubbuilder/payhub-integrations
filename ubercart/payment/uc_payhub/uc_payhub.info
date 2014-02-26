@@ -1,0 +1,7 @@
+; $ID: $
+name = PayHub
+description = Process credit card payments using PayHub
+dependencies[] = uc_payment
+dependencies[] = uc_credit
+package = Ubercart - payment
+core = 7.x

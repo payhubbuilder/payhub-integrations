@@ -1,0 +1,268 @@
+<?php
+
+/**
+ *
+ */
+
+
+define('UC_PAYHUB_GATEWAY_URL', 'https://checkout.payhub.com/invoice/transaction');
+
+
+
+/**
+ * Implements hook_uc_payment_gateway().
+ */
+function uc_payhub_uc_payment_gateway() {
+  $gateways['payhub'] = array(
+    'title' => t('PayHub.com'),
+    'description' => t('Process credit card payments with PayHub'),
+    'settings' => 'uc_payhub_settings_form',
+    'credit' => 'uc_payhub_charge',
+    'credit_txn_types' => array(UC_CREDIT_AUTH_CAPTURE),
+  );
+
+  return $gateways;
+}
+
+
+/**
+ * Callback for payment gateway settings.
+ */
+function uc_payhub_settings_form($form, &$form_state) {
+  //$login_data = _uc_payhub_login_data();
+
+  $form['payhub_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('API Login Credentials'),
+    '#description' => t('This information is required for Ubercart to interact with PayHubs Web Service.  It is different from your Virtual Terminal username and password.  To find your API credentials, log into your PayHub account, click on Admin, click on 3rd Party API.  Do not change the gateway URLs unless otherwise specified.  Changing these URLs to something different may cause your transactions to not get processed.
+    	<br /><br />
+    	If you need a PayHub account, please contact <a href="mailto:ej@swebdev.net">ej@swebdev.net</a> or go to <a href="http://www.swebdev.net/#!application/ccy7">http://swebdev.net/application</a> to fill out a quick and easy online application.
+
+    	'),
+  );
+  $form['payhub_settings']['uc_payhub_mode'] = array(
+    '#type' => 'radios',
+    '#title' => '',
+    '#description' => 'Select a transaction mode, Demo will allow you to run test transactions using our demo account.  Live will run transactions against your live account.',
+    '#options' => array(
+      'production' => 'Live account',
+      'demo' => 'Demo account'),
+    '#default_value' => variable_get('uc_payhub_mode', 'production'),
+  );
+  $form['payhub_settings']['uc_payhub_api_orgid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization ID'),
+    '#default_value' => variable_get('uc_payhub_api_orgid', ''),
+  );
+  $form['payhub_settings']['uc_payhub_api_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API Username'),
+    '#default_value' => variable_get('uc_payhub_api_username', ''),
+  );
+  $form['payhub_settings']['uc_payhub_api_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API Password'),
+    '#default_value' => variable_get('uc_payhub_api_password', ''),
+  );
+  $form['payhub_settings']['uc_payhub_api_termid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Terminal ID'),
+    '#default_value' => variable_get('uc_payhub_api_termid', ''),
+  );
+  $form['payhub_settings']['uc_payhub_api_gateway_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Live URL: '),
+    '#default_value' => variable_get('uc_payhub_api_gateway_url', UC_PAYHUB_GATEWAY_URL),
+  );
+
+  $form['payhub_settings']['demo'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('PayHub Demo'),
+    '#description' => t('These settings pertain to the PayHub Demo Account.  Please do not change these settings unless you have your own demo account credentials.<br /><br />Please use the following CVV numbers:<br /> - Visa = 999<br /> - Mastercard = 998<br /> - AMEX = 9997<br /> - Discover & Diners = 996')
+  );
+  $form['payhub_settings']['uc_payhub_api_gateway_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('PayHub.com Demo Gateway URL'),
+    '#default_value' => variable_get('uc_payhub_api_gateway_url', UC_PAYHUB_GATEWAY_URL),
+  );
+  $form['payhub_settings']['uc_payhub_api_demo_orgid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization ID'),
+    '#default_value' => variable_get('uc_payhub_api_demo_orgid', '10027'),
+  );
+  $form['payhub_settings']['uc_payhub_api_demo_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API Username'),
+    '#default_value' => variable_get('uc_payhub_api_demo_username', 'ND783kdniI'),
+  );
+  $form['payhub_settings']['uc_payhub_api_demo_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API Password'),
+    '#default_value' => variable_get('uc_payhub_api_demo_password', 'yTV7Ctc3v2'),
+  );
+  $form['payhub_settings']['uc_payhub_api_demo_termid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Terminal ID'),
+    '#default_value' => variable_get('uc_payhub_api_demo_termid', '43'),
+  );
+
+
+
+  return $form;
+}
+
+function uc_payhub_charge($order_id, $amount, $data) {
+  // Load the order.
+  $order = uc_order_load($order_id);
+
+  return _uc_payhub_charge($order, $amount, $data);
+}
+
+/**
+ * Handles PayHub payment processing
+ */
+function _uc_payhub_charge($order, $amount, $data) {
+  global $user;
+
+  // Build a description of the order for logging in PayHub.
+  $description = array();
+  foreach ((array) $order->products as $product) {
+    $description[] = $product->qty . 'x ' . $product->model;
+  }
+
+  $billing_address = $order->billing_street1;
+  if ($order->billing_street2) {
+    $billing_address .= ', ' . $order->billing_street2;
+  }
+  $delivery_address = $order->delivery_street1;
+  if ($order->delivery_street2) {
+    $delivery_address .= ', ' . $order->delivery_street2;
+  }
+
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+  $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
+
+  if ($billing_country != 'US') {
+  	$billing_state = uc_get_zone_code($order->billing_zone);
+  	$shipping_state = uc_get_zone_code($order->delivery_zone);
+  } else {
+  	$billing_state = '';
+  	$shipping_state = '';
+  }
+
+
+  // Build the POST data for the transaction.
+  $submit_data = array(
+    // Merchant information.
+    'orgid' => trim(variable_get('uc_payhub_api_orgid', '')),
+    'username' => trim(variable_get('uc_payhub_api_username', '')),
+    'password' => trim(variable_get('uc_payhub_api_password', '')),
+    'tid' => trim(variable_get('uc_payhub_api_termid', '')),
+    'mode' => "live", 
+    'amount' => uc_currency_format($amount, FALSE, FALSE, '.'),
+    'cc' => $order->payment_details['cc_number'],
+    'month' => sprintf('%02d', $order->payment_details['cc_exp_month']),
+    'year' => $order->payment_details['cc_exp_year'],
+    'cvv' => $order->payment_details['cc_cvv'],
+    'note' => $order->order_id . ':  ' . substr(implode(', ', $description), 0, 255) . ' ' . substr(ip_address(), 0, 15),
+    // Customer information.
+    'first_name' => substr($order->billing_first_name, 0, 50),
+    'last_name' => substr($order->billing_last_name, 0, 50),
+    'company' => substr($order->billing_company, 0, 50),
+    'address1' => substr($billing_address, 0, 60),
+    'address2' => "",
+    'city' => substr($order->billing_city, 0, 40),
+    'state' => substr(uc_get_zone_code($order->billing_zone), 0, 40),
+    'zip' => substr($order->billing_postal_code, 0, 20),
+    'phone' => (substr($order->billing_phone, 0, 25) != false ? substr($order->billing_phone, 0, 25) : ''),
+    // 'x_fax' => substr('', 0, 25),
+    'email' => substr($order->primary_email, 0, 255),
+    // Shipping information.
+    'ship_to_name' => substr($order->delivery_first_name, 0, 50) . substr($order->delivery_last_name, 0, 50),
+    'ship_address1' => substr($delivery_address, 0, 60),
+    'ship_address2' => "",
+    'ship_city' => substr($order->delivery_city, 0, 40),
+    'ship_state' => substr(uc_get_zone_code($order->delivery_zone), 0, 40),
+    'ship_zip' => substr($order->delivery_postal_code, 0, 20)
+  );
+
+  // Allow other modules to alter the transaction.
+  //drupal_alter('uc_payhub_transaction', $submit_data);
+
+  // Determine the correct URL based on the transaction mode.
+  if (variable_get('uc_payhub_mode', 'demo') == 'demo') {
+    $post_url = variable_get('uc_payhub_api_gateway_url', UC_PAYHUB_GATEWAY_URL);
+    $submit_data['orgid'] = variable_get('uc_payhub_api_demo_orgid');
+    $submit_data['username'] = variable_get('uc_payhub_api_demo_username');
+    $submit_data['password'] = variable_get('uc_payhub_api_demo_password');
+    $submit_data['tid'] = variable_get('uc_payhub_api_demo_termid');
+    $submit_data['mode'] = "demo";
+  }
+  else {
+    $post_url = variable_get('uc_payhub_api_gateway_url', UC_PAYHUB_GATEWAY_URL);
+  }
+
+  // Translate the data array into a JSON string.
+  
+  $post_fields = json_encode($submit_data);
+  //var_dump($submit_data);
+  //var_dump($post_url);
+  // Setup the cURL request.
+  $ch = curl_init();
+  $c_opts = array(
+  								CURLOPT_URL => $post_url,
+                  CURLOPT_VERBOSE => 0,
+                  CURLOPT_SSL_VERIFYHOST => 0,
+                  CURLOPT_SSL_VERIFYPEER => false,
+                  CURLOPT_CAINFO => "",
+                  CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
+                  CURLOPT_RETURNTRANSFER => true,
+                  CURLOPT_POST => true,
+                  CURLOPT_POSTFIELDS => $post_fields);
+
+  curl_setopt_array($ch, $c_opts);
+  $raw = curl_exec($ch);
+
+  curl_close($ch);
+
+  $response = json_decode($raw, true);
+  
+  
+  //var_dump($raw);
+  //var_dump($response);
+  //var_dump($response['RESPONSE_CODE']);
+  //echo gettype($response);
+
+  //$var_dump($raw);
+  // If we didn't get an approval response code...
+  if ($response['RESPONSE_CODE'] != '00') {
+
+    $result['success'] = FALSE;
+    $result['message'] = t('An error has occurred: @message', array('@message' => $response['RESPONSE_TEXT']));
+    drupal_set_message($result['message'], 'error');
+    $result['message'] = t('Response Code: @code', array('@code' => $response['RESPONSE_CODE']));
+    drupal_set_message($result['message'], 'error');
+    watchdog('uc_payment', 'Payment failed for order @order_id: @message', array('@order_id' => $order->order_id, '@message' => $result['message']), WATCHDOG_WARNING, l(t('view order'), 'admin/store/orders/' . $order->order_id));
+  }
+  else {
+    // Build a message for display and comments in the payments table.
+    $result = array(
+      'success' => TRUE,
+      'data' => array('module' => 'uc_payhub', 'txn_type' => 'sale', 'txn_id' => $response['TRANSACTION_ID'], 'txn_authcode' => $response['APPROVAL_CODE']),
+      'uid' => $user->uid
+    );
+  }
+
+  // Build an admin order comment.
+  $comment = t('Status: @status, PayHub Transaction ID: @id, Order ID: @order, Amount: @amount, AVS Response: @avs, CVV Response: @cvv', array('@status' => $response['RESPONSE_CODE'] == "00" ? t('SUCCESS') : t('FAILED'), '@id' => $response['TRANSACTION_ID'], '@order' => $order->order_id, '@amount' => uc_currency_format($amount, FALSE, FALSE, '.'), '@avs' => $response['AVS_RESULT_CODE'], '@cvv' => $response['VERIFICATION_RESULT_CODE']));
+
+  // Save the comment to the order.
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
+
+
+  return $result;
+
+}
+
+
+?>
