@@ -185,6 +185,30 @@
 
       return $fields;
     }
+
+
+    function sendTransactionToGateway($url, $parameters) {
+      $ch = curl_init();
+
+      $c_opts = array(CURLOPT_URL => $url,
+        CURLOPT_VERBOSE => 0,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $parameters);
+
+      curl_setopt_array($ch, $c_opts);
+
+      $raw = curl_exec($ch);
+
+      curl_close($ch);
+
+      //$raw = preg_replace('/\//', '', $raw);
+
+      return $raw;
+    }
     
     function process() {
       global $osC_Currencies, $osC_ShoppingCart, $messageStack, $osC_Customer, $osC_Tax, $osC_CreditCard;
@@ -192,117 +216,97 @@
       $this->_verifyData();
       
       $orders_id = osC_Order::insert();
-      
+
       $params = array('orgid' => MODULE_PAYMENT_PAYHUB_ORGANIZATION_ID,
                       'username' => MODULE_PAYMENT_PAYHUB_API_USERNAME,
                       'password' => MODULE_PAYMENT_PAYHUB_API_PASSWORD,
                       'tid' => MODULE_PAYMENT_PAYHUB_TERMINAL_ID,
-                      'x_version' => '3.1', 
-                      'x_delim_data' => 'TRUE', 
-                      'x_delim_char' => ',', 
-                      'x_encap_char' => '"', 
-                      'x_relay_response' => 'FALSE', 
-                      'x_first_name' => substr($osC_ShoppingCart->getBillingAddress('firstname'), 0, 50), 
-                      'x_last_name' => substr($osC_ShoppingCart->getBillingAddress('lastname'), 0, 50), 
-                      'x_company' => substr($osC_ShoppingCart->getBillingAddress('company'), 0, 50), 
-                      'x_address' => substr($osC_ShoppingCart->getBillingAddress('street_address'), 0, 60), 
-                      'x_city' => substr($osC_ShoppingCart->getBillingAddress('city'), 0, 40), 
-                      'x_state' => substr($osC_ShoppingCart->getBillingAddress('state'), 0, 40), 
-                      'x_zip' => substr($osC_ShoppingCart->getBillingAddress('postcode'), 0, 20), 
-                      'x_country' => substr($osC_ShoppingCart->getBillingAddress('country_iso_code_2'), 0, 60), 
-                      'x_cust_id' => substr($osC_Customer->getID(), 0, 20), 
-                      'x_customer_ip' => osc_get_ip_address(),
-                      'x_invoice_num' => $order_id, 
-                      'x_email' => substr($osC_Customer->getEmailAddress(), 0, 255), 
-                      'x_description' => substr(STORE_NAME, 0, 255), 
-                      'x_amount' => substr($osC_Currencies->formatRaw($osC_ShoppingCart->getTotal()), 0, 15), 
-                      'x_currency_code' => substr($osC_Currencies->getCode(), 0, 3), 
-                      'x_method' => 'CC', 
-                      'x_card_num' => $osC_CreditCard->getNumber(), 
-                      'x_exp_date' => $osC_CreditCard->getExpiryMonth() . $osC_CreditCard->getExpiryYear(),
-                      'mode' => 'live');
+                      'first_name' => substr($osC_ShoppingCart->getBillingAddress('firstname'), 0, 50), 
+                      'last_name' => substr($osC_ShoppingCart->getBillingAddress('lastname'), 0, 50), 
+                      'company' => substr($osC_ShoppingCart->getBillingAddress('company'), 0, 50), 
+                      'address1' => substr($osC_ShoppingCart->getBillingAddress('street_address'), 0, 60), 
+                      'city' => substr($osC_ShoppingCart->getBillingAddress('city'), 0, 40), 
+                      'state' => substr($osC_ShoppingCart->getBillingAddress('state'), 0, 40), 
+                      'zip' => substr($osC_ShoppingCart->getBillingAddress('postcode'), 0, 20), 
+                      'invoice_num' => $order_id, 
+                      'email' => substr($osC_Customer->getEmailAddress(), 0, 255), 
+                      'note' => substr(STORE_NAME, 0, 255), 
+                      'amount' => $osC_ShoppingCart->getTotal(), 
+                      'cc' => $osC_CreditCard->getNumber(), 
+                      'month' => $osC_CreditCard->getExpiryMonth(),
+                      'year' =>  (string) $osC_CreditCard->getExpiryYear(),
+                      'cvv' => $osC_CreditCard->getCVC());
                       
       
       if (ACCOUNT_TELEPHONE > -1) {
-        $params['x_phone'] = $osC_ShoppingCart->getBillingAddress('telephone_number');
+        $params['phone'] = $osC_ShoppingCart->getBillingAddress('telephone_number');
       }
       
-      if (MODULE_PAYMENT_PAYHUB_VERIFY_WITH_CVC == '1') {
-        $params['x_card_code'] = $osC_CreditCard->getCVC();
-      }
+      // if (MODULE_PAYMENT_PAYHUB_VERIFY_WITH_CVC == '1') {
+      //   $params['x_card_code'] = $osC_CreditCard->getCVC();
+      // }
       
-      if ($osC_ShoppingCart->hasShippingAddress()) {
-        $params['x_ship_to_first_name'] = substr($osC_ShoppingCart->getShippingAddress('firstname'), 0, 50);
-        $params['x_ship_to_last_name'] = substr($osC_ShoppingCart->getShippingAddress('lastname'), 0, 50);
-        $params['x_ship_to_company'] = substr($osC_ShoppingCart->getShippingAddress('company'), 0, 50);
-        $params['x_ship_to_address'] = substr($osC_ShoppingCart->getShippingAddress('street_address'), 0, 60);
-        $params['x_ship_to_city'] = substr($osC_ShoppingCart->getShippingAddress('city'), 0, 40);
-        $params['x_ship_to_state'] = substr($osC_ShoppingCart->getShippingAddress('zone_code'), 0, 40);
-        $params['x_ship_to_zip'] = substr($osC_ShoppingCart->getShippingAddress('postcode'), 0, 20);
-        $params['x_ship_to_country'] = substr($osC_ShoppingCart->getShippingAddress('country_iso_code_2'), 0, 60);
-      }
-      
+      // if ($osC_ShoppingCart->hasShippingAddress()) {
+      //   $params['x_ship_to_first_name'] = substr($osC_ShoppingCart->getShippingAddress('firstname'), 0, 50);
+      //   $params['x_ship_to_last_name'] = substr($osC_ShoppingCart->getShippingAddress('lastname'), 0, 50);
+      //   $params['x_ship_to_company'] = substr($osC_ShoppingCart->getShippingAddress('company'), 0, 50);
+      //   $params['x_ship_to_address'] = substr($osC_ShoppingCart->getShippingAddress('street_address'), 0, 60);
+      //   $params['x_ship_to_city'] = substr($osC_ShoppingCart->getShippingAddress('city'), 0, 40);
+      //   $params['x_ship_to_state'] = substr($osC_ShoppingCart->getShippingAddress('zone_code'), 0, 40);
+      //   $params['x_ship_to_zip'] = substr($osC_ShoppingCart->getShippingAddress('postcode'), 0, 20);
+      //   $params['x_ship_to_country'] = substr($osC_ShoppingCart->getShippingAddress('country_iso_code_2'), 0, 60);
+      // }
+               
+      $gateway_url = 'https://checkout.payhub.com/transaction/api';
+
       switch (MODULE_PAYMENT_PAYHUB_TRANSACTION_SERVER) {
-        case 'Test':
-          var_dump(MODULE_PAYMENT_PAYHUB_TRANSACTION_SERVER);
-          $gateway_url = 'https://checkout.payhub.com/transaction';
+        case 'Live':
+          $params['mode'] = 'live';
+          break;
+        default:
           $params['mode'] = 'demo';
           break;
-
-        default:
-          $gateway_url = 'https://checkout.payhub.com/transaction';
-          break;
       }
 
-      $shipping_tax = ($osC_ShoppingCart->getShippingMethod('cost')) * ($osC_Tax->getTaxRate($osC_ShoppingCart->getShippingMethod('tax_class_id'), $osC_ShoppingCart->getTaxingAddress('country_id'), $osC_ShoppingCart->getTaxingAddress('zone_id')) / 100);
-      $total_tax = $osC_ShoppingCart->getTax() - $shipping_tax;
+      // $shipping_tax = ($osC_ShoppingCart->getShippingMethod('cost')) * ($osC_Tax->getTaxRate($osC_ShoppingCart->getShippingMethod('tax_class_id'), $osC_ShoppingCart->getTaxingAddress('country_id'), $osC_ShoppingCart->getTaxingAddress('zone_id')) / 100);
+      // $total_tax = $osC_ShoppingCart->getTax() - $shipping_tax;
       
-      if ($total_tax > 0) {
-        $params['x_tax'] = $osC_Currencies->formatRaw($total_tax);
-      }
+      // if ($total_tax > 0) {
+      //   $params['x_tax'] = $osC_Currencies->formatRaw($total_tax);
+      // }
       
-      $params['x_freight'] = $osC_Currencies->formatRaw($osC_ShoppingCart->getShippingMethod('cost'));
+      // $params['x_freight'] = $osC_Currencies->formatRaw($osC_ShoppingCart->getShippingMethod('cost'));
       
-      $post_string = '';
-      foreach ($params as $key => $value) {
-        $post_string .= $key . '=' . urlencode(trim($value)) . '&';
-      }
-      $post_string = substr($post_string, 0, -1);
+      // $post_string = '';
+      // foreach ($params as $key => $value) {
+      //   $post_string .= $key . '=' . urlencode(trim($value)) . '&';
+      // }
+      // $post_string = substr($post_string, 0, -1);
+      $post_data = json_encode($params);
       
-      if ($osC_ShoppingCart->hasContents()) {
-        $i = 1;
-        foreach($osC_ShoppingCart->getProducts() as $product) {
-          $post_string .= '&x_line_item=' . urlencode($i) . '<|>' . urlencode(substr($product['name'], 0, 31)) . '<|>' . urlencode(substr($product['name'], 0, 255)) . '<|>' . urlencode($product['quantity']) . '<|>' . urlencode($osC_Currencies->formatRaw($product['final_price'])) . '<|>' . urlencode($product['tax_class_id'] > 0 ? 'YES' : 'NO');
+      // if ($osC_ShoppingCart->hasContents()) {
+      //   $i = 1;
+      //   foreach($osC_ShoppingCart->getProducts() as $product) {
+      //     $post_string .= '&x_line_item=' . urlencode($i) . '<|>' . urlencode(substr($product['name'], 0, 31)) . '<|>' . urlencode(substr($product['name'], 0, 255)) . '<|>' . urlencode($product['quantity']) . '<|>' . urlencode($osC_Currencies->formatRaw($product['final_price'])) . '<|>' . urlencode($product['tax_class_id'] > 0 ? 'YES' : 'NO');
           
-          $i++;
-        }
+      //     $i++;
+      //   }
+      // }
+
+      
+      $transaction_response = $this->sendTransactionToGateway($gateway_url, $post_data);
+      $tresp_json = json_decode($transaction_response);
+
+      if($tresp_json->RESPONSE_CODE == "00") {
+        $msg = "";
+        osC_Order::process($orders_id, $this->_order_status, $msg);
+
       }
-
-      
-      $transaction_response = $this->sendTransactionToGateway($gateway_url, $post_string);
-      $tresponse = preg_split("/\|/", $transaction_response);
-
-
-      $error = false;
-      
-
-      switch ($tresponse[2]) {
-        case '00':
-          $error = false;
-          break;
-
-        default:
-          $error = $tresponse[1] . '  Response Code:  ' . $tresponse[2];
-          break;
-      }
-
-      
-      if ($error != false) {
+      else {
+        $error = '<br />Error Code:  ' . $tresp_json->RESPONSE_CODE;
+        $error .= '<br />Error Text:  ' . $tresp_json->RESPONSE_TEXT;
         osC_Order::remove($orders_id);
-        
         osc_redirect(osc_href_link(FILENAME_CHECKOUT, 'checkout&error=' . $error, 'SSL'));
-      }else {
-        osC_Order::process($orders_id, $this->_order_status, $transaction_response);
       }
     }
     

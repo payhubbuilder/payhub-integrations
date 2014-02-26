@@ -3,7 +3,7 @@
   <definitions>
     <definition>
       <key>payment_payhub_title</key>
-      <value><![CDATA[Payhub.com]]></value>
+      <value><![CDATA[PayHub Checkout]]></value>
       <group>modules-payment</group>
     </definition>
     <definition>
@@ -18,7 +18,7 @@
     </definition>
     <definition>
       <key>payment_payhub_credit_card_owner</key>
-      <value><![CDATA[Credit Card Owner:]]></value>
+      <value><![CDATA[Name on Card:]]></value>
       <group>modules-payment</group>
     </definition>
     <definition>
@@ -33,7 +33,7 @@
     </definition>
     <definition>
       <key>payment_payhub_credit_card_cvc</key>
-      <value><![CDATA[Credit Card Check Number (CVC):]]></value>
+      <value><![CDATA[Credit Card Security Code (CVC/CID):]]></value>
       <group>modules-payment</group>
     </definition>
     <definition>
@@ -43,7 +43,7 @@
     </definition>
     <definition>
       <key>payment_payhub_js_credit_card_cvc</key>
-      <value><![CDATA[* The credit card check number (CVC) must be at least 3 characters.]]></value>
+      <value><![CDATA[* The credit card check number (CVC/CID) must be at least 3 characters.]]></value>
       <group>modules-payment</group>
     </definition>
     <definition>

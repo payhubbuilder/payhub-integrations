@@ -31,7 +31,7 @@
  * @access private
  */
 
-  var $_author_name = 'EJ';
+  var $_author_name = 'PayHub';
   
 /**
  * The developers address
@@ -40,7 +40,7 @@
  * @access private
  */  
   
-  var $_author_www = 'http://railswebdev.com';
+  var $_author_www = 'http://payhub.com';
   
 /**
  * The status of the module
